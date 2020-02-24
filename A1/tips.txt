@@ -1,0 +1,19 @@
+/** WRITE YOUR TIPS IN THIS FILE **/
+
+1. box can be in various different state, and you need to consider that.
+	box can be at storage, pushable in 1 to 4 directions, unpushable but not at storage, etc.
+
+2. For A*, if you heuristic is not very good, you can still prune states base on gval.
+
+
+3. If a initial state cannot be solved in time, it would probably because that the search
+is in a looping state, i.e. the robot is moving up and down or left and right, the state is not 
+progressing anymore, thus the it exceed the time limit. One way to solve this issue is that
+improving your heuristic funciton, and another way can be doing more cycle checking 
+(i.e. elliminating same states using hashing)
+
+
+4. (Extra one)The way of search could be more efficient. You could start the searching from
+the storage to each boxes and eliminate the cells that the boxes can never go to 
+(i.e. corners and some cells that the box cannot be pushed to the storage from that cell).
+ 

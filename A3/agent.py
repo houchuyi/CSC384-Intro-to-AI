@@ -21,7 +21,13 @@ def eprint(*args, **kwargs): #you can use this for debugging, as it will print t
 # Method to compute utility value of terminal state
 def compute_utility(board, color):
     #IMPLEMENT
-    return 0 #change this!
+    (dark, light) = get_score(board)
+    if color = 1: #dark
+        return dark - light
+    if color = 2: #light
+        return light - dark
+    else:
+        return False
 
 # Better heuristic value of board
 def compute_heuristic(board, color): #not implemented, optional
@@ -139,4 +145,6 @@ def run_ai():
             print("{} {}".format(movei, movej))
 
 if __name__ == "__main__":
-    run_ai()
+    #run_ai()
+    board = ((0,0,0,1),(1,2,1,1),(0,1,0,0),(2,2,2,2))
+    compute_utility(board,1)

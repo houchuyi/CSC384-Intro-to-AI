@@ -12,6 +12,10 @@ import random
 import sys
 import time
 
+#global var for Caching
+have_seen_this_before = {}
+
+
 # You can use the functions in othello_shared to write your AI
 from othello_shared import find_lines, get_possible_moves, get_score, play_move
 
@@ -22,9 +26,9 @@ def eprint(*args, **kwargs): #you can use this for debugging, as it will print t
 def compute_utility(board, color):
     #IMPLEMENT
     (dark, light) = get_score(board)
-    if color = 1: #dark
+    if color == 1: #dark
         return dark - light
-    if color = 2: #light
+    if color == 2: #light
         return light - dark
     else:
         return False
@@ -32,17 +36,93 @@ def compute_utility(board, color):
 # Better heuristic value of board
 def compute_heuristic(board, color): #not implemented, optional
     #IMPLEMENT
-    return 0 #change this!
+
+    return compute_utility(board, color) #change this!
 
 ############ MINIMAX ###############################
 def minimax_min_node(board, color, limit, caching = 0):
     #IMPLEMENT
-    return ((0,0),0)
+    if caching == 1:
+        if board in have_seen_this_before:
+            return ([],have_seen_this_before[board])
+    if get_possible_moves(board, color) == []:
+        if not board in have_seen_this_before:
+            have_seen_this_before[board] = compute_utility(board,color)
+        return ([], compute_utility(board, color))
+    if limit == 0:
+        if not board in have_seen_this_before:
+            have_seen_this_before[board] = compute_heuristic(board,color)
+        return ([], compute_heuristic(board, color))
+    if limit == -1:
+        infinity = float('inf')
+        minval = infinity
+        suc_boards = []
+        for m in get_possible_moves(board, color):
+            suc_boards.append((play_move(board, color, m[0],m[1]),m))
+        for state,m in suc_boards:
+            a = minval
+            minval = min(minval, minimax_max_node(state, 3-color, limit, caching)[1])
+            if a!= minval:
+                move = m
+        if not board in have_seen_this_before:
+            have_seen_this_before[board] = minval
+        return (move, minval)
+    else:
+        infinity = float('inf')
+        minval = infinity
+        suc_boards = []
+        for m in get_possible_moves(board, color):
+            suc_boards.append((play_move(board, color, m[0],m[1]),m))
+        for state,m in suc_boards:
+            a = minval
+            minval = min(minval, minimax_max_node(state, 3-color, limit-1, caching)[1])
+            if a!= minval:
+                move = m
+        if not board in have_seen_this_before:
+            have_seen_this_before[board] = minval
+        return (move, minval)
 
 def minimax_max_node(board, color, limit, caching = 0): #returns highest possible utility
     #IMPLEMENT
-    return ((0,0),0)
-
+    if caching == 1:
+        if board in have_seen_this_before:
+            return ([],have_seen_this_before[board])
+    if get_possible_moves(board, color) == []:
+        if not board in have_seen_this_before:
+            have_seen_this_before[board] = compute_utility(board,color)
+        return ([], compute_utility(board, color))
+    if limit == 0:
+        if not board in have_seen_this_before:
+            have_seen_this_before[board] = compute_heuristic(board,color)
+        return ([], compute_heuristic(board, color))
+    if limit == -1:
+        infinity = float('inf')
+        maxval = -infinity
+        suc_boards = []
+        for m in get_possible_moves(board, color):
+            suc_boards.append((play_move(board, color, m[0],m[1]),m))
+        for state,m in suc_boards:
+            a = maxval
+            maxval = max(maxval, minimax_min_node(state, 3-color, limit, caching)[1])
+            if a != maxval: #if maxval changed, we store the move
+                move = m
+        if not board in have_seen_this_before:
+            have_seen_this_before[board] = maxval
+        return (move,maxval)
+    else:
+        infinity = float('inf')
+        maxval = -infinity
+        suc_boards = []
+        for m in get_possible_moves(board, color):
+            suc_boards.append((play_move(board, color, m[0],m[1]),m))
+        for state,m in suc_boards:
+            a = maxval
+            maxval = max(maxval, minimax_min_node(state, 3-color, limit-1, caching)[1])
+            if a != maxval: #if maxval changed, we store the move
+                move = m
+        if not board in have_seen_this_before:
+            have_seen_this_before[board] = maxval
+        return (move,maxval)
 def select_move_minimax(board, color, limit, caching = 0):
     """
     Given a board and a player color, decide on a move.
@@ -57,16 +137,126 @@ def select_move_minimax(board, color, limit, caching = 0):
     If caching is OFF (i.e. 0), do NOT use state caching to reduce the number of state evaluations.
     """
     #IMPLEMENT
-    return (0,0) #change this!
+    if get_possible_moves(board, color) == None or limit == 0:
+        return ([],compute_utility(board,color))
+
+    #Apply player's moves to get successor states
+    #always max
+    global have_seen_this_before
+    (move,maxval)= minimax_max_node(board, color, limit, caching)
+
+    return move #change this!
 
 ############ ALPHA-BETA PRUNING #####################
 def alphabeta_min_node(board, color, alpha, beta, limit, caching = 0, ordering = 0):
     #IMPLEMENT
-    return ((0,0),0) #change this!
+    if caching == 1:
+        if board in have_seen_this_before:
+            return ([],have_seen_this_before[board])
+    if get_possible_moves(board, color) == []:
+        if not board in have_seen_this_before:
+            have_seen_this_before[board] = compute_utility(board,color)
+        return ([],compute_utility(board,color))
+    if limit == 0:
+        if not board in have_seen_this_before:
+            have_seen_this_before[board] = compute_heuristic(board,color)
+        return ([],compute_heuristic(board,color))
+    if limit == -1:
+        infinity = float('inf')
+        val = infinity
+        suc_boards = []
+        move = []
+        for m in get_possible_moves(board,color):
+            suc_boards.append((play_move(board,color,m[0],m[1]),m,compute_utility(play_move(board,color,m[0],m[1]),color)))
+        if ordering == 1:
+            suc_boards = sorted(suc_boards, key=lambda x:x[2])
+        for state,m,disks in suc_boards:
+            a = val
+            val = min(val, alphabeta_max_node(state,3-color,alpha, beta, limit, caching)[1])
+            if val <= alpha:
+                return (m,val)
+            beta = min(beta, val)
+            if a != val:
+                move = m
+        if not board in have_seen_this_before:
+            have_seen_this_before[board] = val
+        return (move,val)
+    else:
+        infinity = float('inf')
+        val = infinity
+        suc_boards = []
+        move = []
+        for m in get_possible_moves(board,color):
+            suc_boards.append((play_move(board,color,m[0],m[1]),m,compute_utility(play_move(board,color,m[0],m[1]),color)))
+        if ordering == 1:
+            suc_boards = sorted(suc_boards, key=lambda x:x[2])
+        for state,m,disks in suc_boards:
+            a = val
+            val = min(val, alphabeta_max_node(state,3-color,alpha, beta, limit-1, caching)[1])
+            if val <= alpha:
+                return (m,val)
+            beta = min(beta, val)
+            if a != val:
+                move = m
+        if not board in have_seen_this_before:
+            have_seen_this_before[board] = val
+        return (move,val)
 
 def alphabeta_max_node(board, color, alpha, beta, limit, caching = 0, ordering = 0):
     #IMPLEMENT
-    return ((0,0),0) #change this!
+    if caching == 1:
+        if board in have_seen_this_before:
+            return ([],have_seen_this_before[board])
+    if get_possible_moves(board, color) == []:
+        if not board in have_seen_this_before:
+            have_seen_this_before[board] = compute_utility(board,color)
+        return ([],compute_utility(board,color))
+    if limit == 0:
+        if not board in have_seen_this_before:
+            have_seen_this_before[board] = compute_heuristic(board,color)
+        return ([],compute_heuristic(board, color))
+    if limit == -1:
+        infinity = float('inf')
+        val = -infinity
+        suc_boards = []
+        move = []
+        for m in get_possible_moves(board,color):
+            suc_boards.append((play_move(board,color,m[0],m[1]),m,compute_utility(play_move(board,color,m[0],m[1]),color)))
+        if ordering == 1:
+            suc_boards = sorted(suc_boards, key=lambda x:x[2])
+
+        for state,m,disks in suc_boards:
+            a = val
+            val = max(val, alphabeta_min_node(state,3-color,alpha, beta, limit,caching)[1])
+            if val >= beta:
+                return (m,val)
+            alpha = max(alpha, val)
+            if a != val:
+                move = m
+        if not board in have_seen_this_before:
+            have_seen_this_before[board] = val
+        return (move,val)
+    else:
+        infinity = float('inf')
+        val = -infinity
+        suc_boards = []
+        move = []
+        for m in get_possible_moves(board,color):
+            suc_boards.append((play_move(board,color,m[0],m[1]),m,compute_utility(play_move(board,color,m[0],m[1]),color)))
+        if ordering == 1:
+            suc_boards = sorted(suc_boards, key=lambda x:x[2])
+
+        for state,m,disks in suc_boards:
+            a = val
+            val = max(val, alphabeta_min_node(state,3-color,alpha, beta, limit-1,caching)[1])
+            if val >= beta:
+                return (m,val)
+            alpha = max(alpha, val)
+            if a != val:
+                move = m
+        if not board in have_seen_this_before:
+            have_seen_this_before[board] = val
+        return (move,val)
 
 def select_move_alphabeta(board, color, limit, caching = 0, ordering = 0):
     """
@@ -84,7 +274,22 @@ def select_move_alphabeta(board, color, limit, caching = 0, ordering = 0):
     If ordering is OFF (i.e. 0), do NOT use node ordering to expedite pruning and reduce the number of state evaluations.
     """
     #IMPLEMENT
-    return (0,0) #change this!
+    if get_possible_moves(board, color) == None or limit == 0:
+        return compute_utility(board,color)
+    global have_seen_this_before
+    infinity = float('inf')
+    bestval = -infinity
+    beta = infinity
+    suc_boards = []
+    for m in get_possible_moves(board,color):
+        suc_boards.append((play_move(board,color,m[0],m[1]),m))
+    for state, m in suc_boards:
+        move, value = alphabeta_min_node(state, 3-color, bestval, beta, limit-1, caching)
+        if value > bestval:
+            bestval = value
+            bestmove = m
+
+    return bestmove #change this!
 
 ####################################################
 def run_ai():
@@ -145,6 +350,6 @@ def run_ai():
             print("{} {}".format(movei, movej))
 
 if __name__ == "__main__":
-    #run_ai()
-    board = ((0,0,0,1),(1,2,1,1),(0,1,0,0),(2,2,2,2))
-    compute_utility(board,1)
+    run_ai()
+    # board = ((0,0,0,0),(0,2,1,0),(0,1,2,0),(0,0,0,0))
+    # select_move_alphabeta(board,1,-1,0,1)

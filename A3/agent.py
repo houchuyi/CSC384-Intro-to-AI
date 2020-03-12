@@ -166,45 +166,30 @@ def alphabeta_min_node(board, color, alpha, beta, limit, caching = 0, ordering =
             have_seen_this_before[board] = compute_heuristic(board,max_color)
         return ([],compute_heuristic(board,max_color))
     if limit == -1:
-        infinity = float('inf')
-        val = infinity
-        suc_boards = []
-        move = []
-        for m in get_possible_moves(board,min_color):
-            suc_boards.append((play_move(board,min_color,m[0],m[1]),m,compute_utility(play_move(board,min_color,m[0],m[1]),max_color)))
-        if ordering == 1:
-            suc_boards = sorted(suc_boards, key=lambda x:x[2])
-        for state,m,disks in suc_boards:
-            a = val
-            val = min(val, alphabeta_max_node(state,max_color,alpha, beta, limit, caching)[1])
-            if val <= alpha:
-                return (m,val)
-            beta = min(beta, val)
-            if a != val:
-                move = m
-        if not board in have_seen_this_before:
-            have_seen_this_before[board] = val
-        return (move,val)
+        limit = limit
     else:
-        infinity = float('inf')
-        val = infinity
-        suc_boards = []
-        move = []
-        for m in get_possible_moves(board,min_color):
-            suc_boards.append((play_move(board,min_color,m[0],m[1]),m,compute_utility(play_move(board,min_color,m[0],m[1]),max_color)))
-        if ordering == 1:
-            suc_boards = sorted(suc_boards, key=lambda x:x[2])
-        for state,m,disks in suc_boards:
-            a = val
-            val = min(val, alphabeta_max_node(state,max_color,alpha, beta, limit-1, caching)[1])
-            if val <= alpha:
-                return (m,val)
-            beta = min(beta, val)
-            if a != val:
-                move = m
-        if not board in have_seen_this_before:
-            have_seen_this_before[board] = val
-        return (move,val)
+        limit = limit - 1
+    infinity = float('inf')
+    val = infinity
+    suc_boards = []
+    move = []
+    for m in get_possible_moves(board,min_color):
+        new_board = play_move(board,min_color,m[0],m[1])
+        suc_boards.append((new_board,m,compute_utility(new_board,max_color)))
+    if ordering == 1:
+        suc_boards = sorted(suc_boards, key=lambda x:x[2])
+    for state,m,disks in suc_boards:
+        a = val
+        val = min(val, alphabeta_max_node(state,max_color,alpha, beta, limit, caching)[1])
+        if val <= alpha:
+            return (m,val)
+        beta = min(beta, val)
+        if a != val:
+            move = m
+    if not board in have_seen_this_before:
+        have_seen_this_before[board] = val
+    return (move,val)
+    
 
 def alphabeta_max_node(board, color, alpha, beta, limit, caching = 0, ordering = 0):
     #IMPLEMENT
@@ -220,47 +205,30 @@ def alphabeta_max_node(board, color, alpha, beta, limit, caching = 0, ordering =
             have_seen_this_before[board] = compute_heuristic(board,color)
         return ([],compute_heuristic(board, color))
     if limit == -1:
-        infinity = float('inf')
-        val = -infinity
-        suc_boards = []
-        move = []
-        for m in get_possible_moves(board,color):
-            suc_boards.append((play_move(board,color,m[0],m[1]),m,compute_utility(play_move(board,color,m[0],m[1]),color)))
-        if ordering == 1:
-            suc_boards = sorted(suc_boards, key=lambda x:x[2])
-
-        for state,m,disks in suc_boards:
-            a = val
-            val = max(val, alphabeta_min_node(state,3-color,alpha, beta, limit,caching)[1])
-            if val >= beta:
-                return (m,val)
-            alpha = max(alpha, val)
-            if a != val:
-                move = m
-        if not board in have_seen_this_before:
-            have_seen_this_before[board] = val
-        return (move,val)
+        limit = limit
     else:
-        infinity = float('inf')
-        val = -infinity
-        suc_boards = []
-        move = []
-        for m in get_possible_moves(board,color):
-            suc_boards.append((play_move(board,color,m[0],m[1]),m,compute_utility(play_move(board,color,m[0],m[1]),color)))
-        if ordering == 1:
-            suc_boards = sorted(suc_boards, key=lambda x:x[2])
+        limit = limit - 1
+    infinity = float('inf')
+    val = -infinity
+    suc_boards = []
+    move = []
+    for m in get_possible_moves(board,color):
+        suc_boards.append((play_move(board,color,m[0],m[1]),m,compute_utility(play_move(board,color,m[0],m[1]),color)))
+    if ordering == 1:
+        suc_boards = sorted(suc_boards, key=lambda x:x[2])
 
-        for state,m,disks in suc_boards:
-            a = val
-            val = max(val, alphabeta_min_node(state,3-color,alpha, beta, limit-1,caching)[1])
-            if val >= beta:
-                return (m,val)
-            alpha = max(alpha, val)
-            if a != val:
-                move = m
-        if not board in have_seen_this_before:
-            have_seen_this_before[board] = val
-        return (move,val)
+    for state,m,disks in suc_boards:
+        a = val
+        val = max(val, alphabeta_min_node(state,color,alpha, beta, limit,caching)[1])
+        if val >= beta:
+            return (m,val)
+        alpha = max(alpha, val)
+        if a != val:
+            move = m
+    if not board in have_seen_this_before:
+        have_seen_this_before[board] = val
+    return (move,val)
+
 
 def select_move_alphabeta(board, color, limit, caching = 0, ordering = 0):
     """

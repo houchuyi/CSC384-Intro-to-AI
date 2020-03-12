@@ -42,26 +42,28 @@ def compute_heuristic(board, color): #not implemented, optional
 ############ MINIMAX ###############################
 def minimax_min_node(board, color, limit, caching = 0):
     #IMPLEMENT
+    max_color = color
+    min_color = 3-color
     if caching == 1:
         if board in have_seen_this_before:
             return ([],have_seen_this_before[board])
-    if get_possible_moves(board, color) == []:
+    if get_possible_moves(board, min_color) == []:
         if not board in have_seen_this_before:
-            have_seen_this_before[board] = compute_utility(board,color)
-        return ([], compute_utility(board, color))
+            have_seen_this_before[board] = compute_utility(board,max_color)
+        return ([], compute_utility(board, max_color))
     if limit == 0:
         if not board in have_seen_this_before:
-            have_seen_this_before[board] = compute_heuristic(board,color)
-        return ([], compute_heuristic(board, color))
+            have_seen_this_before[board] = compute_heuristic(board,max_color)
+        return ([], compute_heuristic(board, max_color))
     if limit == -1:
         infinity = float('inf')
         minval = infinity
         suc_boards = []
-        for m in get_possible_moves(board, color):
-            suc_boards.append((play_move(board, color, m[0],m[1]),m))
+        for m in get_possible_moves(board, min_color):
+            suc_boards.append((play_move(board, min_color, m[0],m[1]),m))
         for state,m in suc_boards:
             a = minval
-            minval = min(minval, minimax_max_node(state, 3-color, limit, caching)[1])
+            minval = min(minval, minimax_max_node(state, max_color, limit, caching)[1])
             if a!= minval:
                 move = m
         if not board in have_seen_this_before:
@@ -71,11 +73,11 @@ def minimax_min_node(board, color, limit, caching = 0):
         infinity = float('inf')
         minval = infinity
         suc_boards = []
-        for m in get_possible_moves(board, color):
-            suc_boards.append((play_move(board, color, m[0],m[1]),m))
+        for m in get_possible_moves(board, min_color):
+            suc_boards.append((play_move(board, min_color, m[0],m[1]),m))
         for state,m in suc_boards:
             a = minval
-            minval = min(minval, minimax_max_node(state, 3-color, limit-1, caching)[1])
+            minval = min(minval, minimax_max_node(state, max_color, limit-1, caching)[1])
             if a!= minval:
                 move = m
         if not board in have_seen_this_before:
@@ -103,7 +105,7 @@ def minimax_max_node(board, color, limit, caching = 0): #returns highest possibl
             suc_boards.append((play_move(board, color, m[0],m[1]),m))
         for state,m in suc_boards:
             a = maxval
-            maxval = max(maxval, minimax_min_node(state, 3-color, limit, caching)[1])
+            maxval = max(maxval, minimax_min_node(state, color, limit, caching)[1])
             if a != maxval: #if maxval changed, we store the move
                 move = m
         if not board in have_seen_this_before:
@@ -117,7 +119,7 @@ def minimax_max_node(board, color, limit, caching = 0): #returns highest possibl
             suc_boards.append((play_move(board, color, m[0],m[1]),m))
         for state,m in suc_boards:
             a = maxval
-            maxval = max(maxval, minimax_min_node(state, 3-color, limit-1, caching)[1])
+            maxval = max(maxval, minimax_min_node(state, color, limit-1, caching)[1])
             if a != maxval: #if maxval changed, we store the move
                 move = m
         if not board in have_seen_this_before:
@@ -150,29 +152,31 @@ def select_move_minimax(board, color, limit, caching = 0):
 ############ ALPHA-BETA PRUNING #####################
 def alphabeta_min_node(board, color, alpha, beta, limit, caching = 0, ordering = 0):
     #IMPLEMENT
+    max_color = color
+    min_color = 3-color
     if caching == 1:
         if board in have_seen_this_before:
             return ([],have_seen_this_before[board])
-    if get_possible_moves(board, color) == []:
+    if get_possible_moves(board, min_color) == []:
         if not board in have_seen_this_before:
-            have_seen_this_before[board] = compute_utility(board,color)
-        return ([],compute_utility(board,color))
+            have_seen_this_before[board] = compute_utility(board,max_color)
+        return ([],compute_utility(board,max_color))
     if limit == 0:
         if not board in have_seen_this_before:
-            have_seen_this_before[board] = compute_heuristic(board,color)
-        return ([],compute_heuristic(board,color))
+            have_seen_this_before[board] = compute_heuristic(board,max_color)
+        return ([],compute_heuristic(board,max_color))
     if limit == -1:
         infinity = float('inf')
         val = infinity
         suc_boards = []
         move = []
-        for m in get_possible_moves(board,color):
-            suc_boards.append((play_move(board,color,m[0],m[1]),m,compute_utility(play_move(board,color,m[0],m[1]),color)))
+        for m in get_possible_moves(board,min_color):
+            suc_boards.append((play_move(board,min_color,m[0],m[1]),m,compute_utility(play_move(board,min_color,m[0],m[1]),max_color)))
         if ordering == 1:
             suc_boards = sorted(suc_boards, key=lambda x:x[2])
         for state,m,disks in suc_boards:
             a = val
-            val = min(val, alphabeta_max_node(state,3-color,alpha, beta, limit, caching)[1])
+            val = min(val, alphabeta_max_node(state,max_color,alpha, beta, limit, caching)[1])
             if val <= alpha:
                 return (m,val)
             beta = min(beta, val)
@@ -186,13 +190,13 @@ def alphabeta_min_node(board, color, alpha, beta, limit, caching = 0, ordering =
         val = infinity
         suc_boards = []
         move = []
-        for m in get_possible_moves(board,color):
-            suc_boards.append((play_move(board,color,m[0],m[1]),m,compute_utility(play_move(board,color,m[0],m[1]),color)))
+        for m in get_possible_moves(board,min_color):
+            suc_boards.append((play_move(board,min_color,m[0],m[1]),m,compute_utility(play_move(board,min_color,m[0],m[1]),max_color)))
         if ordering == 1:
             suc_boards = sorted(suc_boards, key=lambda x:x[2])
         for state,m,disks in suc_boards:
             a = val
-            val = min(val, alphabeta_max_node(state,3-color,alpha, beta, limit-1, caching)[1])
+            val = min(val, alphabeta_max_node(state,max_color,alpha, beta, limit-1, caching)[1])
             if val <= alpha:
                 return (m,val)
             beta = min(beta, val)

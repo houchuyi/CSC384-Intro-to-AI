@@ -156,7 +156,7 @@ def alphabeta_min_node(board, color, alpha, beta, limit, caching = 0, ordering =
         new_board = play_move(board,min_color,m[0],m[1])
         suc_boards.append((new_board,m,compute_utility(new_board,max_color)))
     if ordering == 1:
-        suc_boards = sorted(suc_boards, key=lambda x:x[2])
+        suc_boards = sorted(suc_boards, key=lambda x:x[2], reverse = True)
     for state,m,disks in suc_boards:
         a = val
         val = min(val, alphabeta_max_node(state,max_color,alpha, beta, limit, caching)[1])
@@ -194,7 +194,7 @@ def alphabeta_max_node(board, color, alpha, beta, limit, caching = 0, ordering =
     for m in get_possible_moves(board,color):
         suc_boards.append((play_move(board,color,m[0],m[1]),m,compute_utility(play_move(board,color,m[0],m[1]),color)))
     if ordering == 1:
-        suc_boards = sorted(suc_boards, key=lambda x:x[2])
+        suc_boards = sorted(suc_boards, key=lambda x:x[2], reverse = True)
 
     for state,m,disks in suc_boards:
         a = val

@@ -1,4 +1,4 @@
-'''Classes for variable elimination Routines 
+'''Classes for variable elimination Routines
    A) class BN_Variable
 
       This class allows one to define Bayes Net variables.
@@ -9,13 +9,13 @@
       variable domain.
 
       The variable also has a set and get value method. These set a
-      value for the variable that can be used by the factor class. 
+      value for the variable that can be used by the factor class.
 
 
     B) class factor
 
       This class allows one to define a factor specified by a table
-      of values. 
+      of values.
 
       On initialization the variables the factor is over is
       specified. This must be a list of variables. This list of
@@ -33,19 +33,19 @@
       probability table in the bayes-net. Then one initializes the
       factor by iteratively setting the values of all of the factor's
       variables and then adding the factor's numeric value using the
-      add_value method. 
+      add_value method.
 
     C) class BN
        This class allows one to put factors and variables together to form a Bayes net.
        It serves as a convient place to store all of the factors and variables associated
        with a Bayes Net in one place. It also has some utility routines to, e.g,., find
-       all of the factors a variable is involved in. 
+       all of the factors a variable is involved in.
 
     '''
 
 class Variable:
     '''Class for defining Bayes Net variables. '''
-    
+
     def __init__(self, name, domain=[]):
         '''Create a variable object, specifying its name (a
         string). Optionally specify the initial domain.
@@ -101,13 +101,13 @@ class Variable:
     def __repr__(self):
         '''string to return when evaluating the object'''
         return("{}".format(self.name))
-    
+
     def __str__(self):
         '''more elaborate string for printing'''
         return("{}, Dom = {}".format(self.name, self.dom))
 
 
-class Factor: 
+class Factor:
 
     '''Class for defining factors. A factor is a function that is over
     an ORDERED sequence of variables called its scope. It maps every
@@ -140,7 +140,7 @@ class Factor:
         self.values = [0]*size  #initialize values to be long list of zeros.
 
     def get_scope(self):
-        '''returns copy of scope...you can modify this copy without affecting 
+        '''returns copy of scope...you can modify this copy without affecting
            the factor object'''
         return list(self.scope)
 
@@ -169,8 +169,8 @@ class Factor:
                 index = index * v.domain_size() + v.value_index(t[0])
                 t = t[1:]
             self.values[index] = t[0]
-         
-    def add_value_at_current_assignment(self, number): 
+
+    def add_value_at_current_assignment(self, number):
 
         '''This function allows adding values to the factor in a way
         that will often be more convenient. We pass it only a single
@@ -187,7 +187,7 @@ class Factor:
         A.set_assignment(1)
         B.set_assignment('a')
         C.set_assignment('heavy')
-        then we call 
+        then we call
         add_value_at_current_assignment(0.33)
          with the value 0.33, we would have initialized this factor to have
         the value 0.33 on the assigments (A=1, B='1', C='heavy')
@@ -196,11 +196,11 @@ class Factor:
 
         One advantage of the current_assignment interface to factor values is that
         we don't have to worry about the order of the variables in the factor's
-        scope. add_values on the other hand has to be given tuples of values where 
-        the values must be given in the same order as the variables in the factor's 
-        scope. 
+        scope. add_values on the other hand has to be given tuples of values where
+        the values must be given in the same order as the variables in the factor's
+        scope.
 
-        See recursive_print_values called by print_table to see an example of 
+        See recursive_print_values called by print_table to see an example of
         where the current_assignment interface to the factor values comes in handy.
         '''
 
@@ -240,7 +240,7 @@ class Factor:
         B.set_assignment('a') and C.set_assignment('heavy'), then this
         function would return the value of the factor on the
         assigments (A=1, B='1', C='heavy')'''
-        
+
         index = 0
         for v in self.scope:
             index = index * v.domain_size() + v.get_assignment_index()
@@ -257,7 +257,7 @@ class Factor:
         for v in self.scope:
             v.set_assignment_index(saved_values[0])
             saved_values = saved_values[1:]
-        
+
     def recursive_print_values(self, vars):
         if len(vars) == 0:
             print("[",end=""),
@@ -283,7 +283,7 @@ class BN:
         self.Variables = list(Vars)
         self.Factors = list(Factors)
         for f in self.Factors:
-            for v in f.get_scope():     
+            for v in f.get_scope():
                 if not v in self.Variables:
                     print("Bayes net initialization error")
                     print("Factor scope {} has variable {} that", end='')
@@ -297,7 +297,51 @@ class BN:
 
 def multiply_factors(Factors):
     '''return a new factor that is the product of the factors in Fators'''
-     #IMPLEMENT
+    #IMPLEMENT
+    # temp = 1
+    # for factor in Factors:
+    #     temp = temp * factor.get_value_at_current_assignments()
+    #     for var in factor.get_scope():
+    #         if not var in scope:
+    #             scope.append(var)
+    # new_Factor = Factor("multi_factor", scope)
+    # new_Factor.add_value_at_current_assignment(temp)
+
+    new_name = ""
+    for i in range(len(Factors)):
+        factor = Factors[i]
+        if i==0:
+            new_name += factor.name
+        if i==len(Factors)-1:
+            new_name = new_name + "_" + factor.name
+        else:
+            new_name = new_name + "_" + factor.name + "_"
+
+        new_scope = list()
+        for factor in Factors:
+            for var in factor.get_scope():
+                if not var in new_scope:
+                    new_scope.append(var)
+
+        new_Factor = Factor(new_name,new_scope)
+
+        recursive_multiply(Factors, new_scope, new_Factor)
+
+    return new_Factor
+
+def recursive_multiply(Factors, new_scope, new_Factor, total=1):
+    '''
+    helper function for multiply_factors
+    Used the idea from recursive_print_values() function
+    '''
+    if not len(new_scope):
+        for factor in Factors:
+            total = total*factor.get_value_at_current_assignments()
+        new_Factor.add_value_at_current_assignment(total)
+    else:
+        for val in new_scope[0].domain():
+            new_scope[0].set_assignment(val)
+            recursive_multiply(Factors, new_scope[1:], new_Factor, total)
 
 def restrict_factor(f, var, value):
     '''f is a factor, var is a Variable, and value is a value from var.domain.
@@ -305,11 +349,65 @@ def restrict_factor(f, var, value):
     Don't change f! If f has only one variable its restriction yields a
     constant factor'''
     #IMPLEMENT
+    # for v in f.get_scope():
+    #     for i in v.Domain:
+    #         if v == var and i = value:
+    #             pass
+    #         else:
+    #             rFactor.add_values()
+
+    new_name = f.name+'_Restr_{'+str(var)+'='+str(value)+'}'
+    new_scope = f.get_scope()
+
+    var.set_assignment(value)
+    new_scope.remove(var)
+
+    new_Factor = Factor(new_name, new_scope)
+
+    recursive_restrict(f, new_scope, new_Factor)
+
+    return new_Factor
+
+def recursive_restrict(old_Factor, scope, new_Factor):
+    '''
+    helper function for restrict_factor
+    '''
+    if not scope:
+        old_assignment = old_Factor.get_value_at_current_assignments()
+        new_Factor.add_value_at_current_assignment(old_assignment)
+    else:
+        for var in scope[0].domain():
+            scope[0].set_assignment(var)
+            recursive_restrict(old_Factor, scope[1:], new_Factor)
 
 def sum_out_variable(f, var):
     '''return a new factor that is the product of the factors in Factors
        followed by the suming out of Var'''
     #IMPLEMENT
+    new_name = f.name + '_Sum_{'+str(var.name)+'}'
+    new_scope = f.get_scope()
+
+    new_scope.remove(var)
+
+    new_Factor = Factor(new_name, new_scope)
+
+    recursive_sum(f, new_Factor, new_scope, var)
+
+    return new_Factor
+
+def recursive_sum(f, new_Factor, new_scope, var, total = 0):
+    if not len(new_scope):
+        for val in var.domain():
+            var.set_assignment(val)
+            temp = f.get_value_at_current_assignments()
+            total += temp
+        new_Factor.add_value_at_current_assignment(total)
+    else:
+        for val in new_scope[0].domain():
+            new_scope[0].set_assignment(val)
+            recursive_sum(f, new_Factor, new_scope[1:], var)
+
+
 
 def normalize(nums):
     '''take as input a list of number and return a new list of numbers where
@@ -326,7 +424,7 @@ def normalize(nums):
 ###Orderings
 def min_fill_ordering(Factors, QueryVar):
     '''Compute a min fill ordering given a list of factors. Return a list
-    of variables from the scopes of the factors in Factors. The QueryVar is 
+    of variables from the scopes of the factors in Factors. The QueryVar is
     NOT part of the returned ordering'''
     scopes = []
     for f in Factors:
@@ -336,7 +434,7 @@ def min_fill_ordering(Factors, QueryVar):
         for v in s:
             if not v in Vars and v != QueryVar:
                 Vars.append(v)
-    
+
     ordering = []
     while Vars:
         (var,new_scope) = min_fill_var(scopes,Vars)
@@ -383,8 +481,8 @@ def remove_var(var, new_scope, scopes):
             new_scopes.append(s)
     new_scopes.append(new_scope)
     return new_scopes
-            
-        
+
+
 ###
 def VE(Net, QueryVar, EvidenceVars):
     '''
@@ -393,7 +491,7 @@ def VE(Net, QueryVar, EvidenceVars):
                       we want to compute)
            EvidenceVars---a LIST of Variable objects. Each of these
                           variables has had its evidence set to a particular
-                          value from its domain using set_evidence. 
+                          value from its domain using set_evidence.
 
    VE returns a distribution over the values of QueryVar, i.e., a list
    of numbers one for every value in QueryVar's domain. These numbers
@@ -407,4 +505,55 @@ def VE(Net, QueryVar, EvidenceVars):
    Pr(A='a'|B=1, C='c') = 0.26
     '''
     #IMPLEMENT
+    Factors = Net.factors()
 
+    ##########
+    #1. replace each factor f in F that mentions a variables in E with its restriction fE = e
+
+    for i in range(len(Factors)):
+        for evidence_var in EvidenceVars:
+            if evidence_var in Factors[i].get_scope():
+                new_Factor = restrict_factor(Factors[i], evidence_var, evidence_var.get_evidence())
+
+                #replace happens here
+                Factors[i] = new_Factor
+
+    ##########
+    #2. For each Zj in the order given eliminate Zj in Z as follows
+    for z_j in min_fill_ordering(Factors, QueryVar):
+    #a) Compute new factor gj = sum(f1xf2x...xfk) where fi are the factors in F that include Zj
+        temp = list()
+        for factor in Factors:
+            if z_j in factor.get_scope():
+                temp.append(factor)
+
+        #compute f1xf2xf3x...xfk
+        product_of_fi = multiply_factors(temp)
+        #compute sum of the above factor over z_j
+        g_j = sum_out_variable(product_of_fi, z_j)
+
+    #b) Remove the factors fi (that mention Zj) from F and add new factor gj to F
+        for factor in temp:
+            Factors.remove(factor)
+
+        Factors.append(g_j)
+
+    #########
+    #3. The remaining factors at the end of this process will refer only to the query varibale Q. Take their product and normalized to produce P(Q|E)
+
+    #product of the remaining factors with Q
+    product_of_factors_w_Q = multiply_factors(Factors)
+
+    #normalize
+    normalization = 0
+    for i in product_of_factors_w_Q.values:
+        normalization += i
+
+    #check if normalization = 0
+    if not normalization:
+        print("Zero Division Occurs!")
+
+    rval = list()
+    for i in product_of_factors_w_Q.values:
+        rval.append(i/normalization)
+    return rval
